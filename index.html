@@ -1,5 +1,1606 @@
-
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRACE-Eisenhower Priority Matrix</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100vw;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .ikigai-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 160px;
+            height: 160px;
+            z-index: 5;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .secondary-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+        }
+        
+        .secondary-btn:hover {
+            box-shadow: 0 15px 30px rgba(108, 117, 125, 0.4);
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .legend-item:hover {
+            background: rgba(255,255,255,0.8);
+            transform: translateY(-2px);
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #667eea;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .ikigai-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+        }
+        
+        .grace-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .time-allocation-chart {
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .chart-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .pie-chart {
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+        
+        .pie-chart svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        
+        .pie-slice {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .pie-slice:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+            transform-origin: center;
+        }
+        
+        .chart-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-entry {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+        
+        .legend-entry:hover {
+            background: rgba(255,255,255,0.9);
+            transform: translateY(-1px);
+        }
+        
+        .legend-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .no-data-message {
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .matrix-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: minmax(200px, auto) minmax(400px, auto) minmax(150px, auto) minmax(150px, auto);
+            gap: 15px;
+            margin-bottom: 40px;
+            border: 3px solid #2c3e50;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-size: 2.2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .grace-subtitle {
+            color: #7f8c8d;
+            font-size: 1em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .grace-framework {
+            color: #2c3e50;
+            padding: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .grace-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .grace-item {
+            padding: 12px 15px;
+            font-size: 1em;
+            font-weight: 600;
+            color: #2c3e50;
+            background: rgba(255,255,255,0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .grace-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        
+        .time-allocation-chart {
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .chart-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .pie-chart {
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+        
+        .pie-chart svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        
+        .pie-slice {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .pie-slice:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+            transform-origin: center;
+        }
+        
+        .chart-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-entry {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+        
+        .legend-entry:hover {
+            background: rgba(255,255,255,0.9);
+            transform: translateY(-1px);
+        }
+        
+        .legend-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .no-data-message {
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .matrix-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: minmax(200px, auto) minmax(400px, auto) minmax(150px, auto) minmax(150px, auto);
+            gap: 15px;
+            margin-bottom: 40px;
+            border: 3px solid #2c3e50;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .quadrant {
+            padding: 15px 15px 60px 15px;
+            border: 2px solid #ecf0f1;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            word-wrap: break-word;
+        }
+        
+        .quadrant:hover {
+            transform: scale(1.01);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            z-index: 1;
+        }
+        
+        .quadrant-held {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #495057;
+            grid-column: 1 / -1;
+            position: relative;
+        }
+        
+        .quadrant-completed {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            grid-column: 1 / -1;
+            position: relative;
+        }
+        
+        .quadrant-1 {
+            background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
+            color: #2c3e50;
+        }
+        
+        .quadrant-2 {
+            background: linear-gradient(135deg, #ffd3a5, #fdb99b);
+            color: #2c3e50;
+        }
+        
+        .quadrant-3 {
+            background: linear-gradient(135deg, #c5a3ff, #f093fb);
+            color: #2c3e50;
+        }
+        
+        .quadrant-4 {
+            background: linear-gradient(135deg, #ffa8b6, #ffb6a3);
+            color: #2c3e50;
+        }
+        
+        .quadrant-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .quadrant-count {
+            background: rgba(255,255,255,0.7);
+            color: #2c3e50;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+        
+        .quadrant-subtitle {
+            font-size: 1em;
+            opacity: 0.8;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .quadrant-grace-score {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.8);
+            color: #2c3e50;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5);
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .quadrant-performance-score {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(255,255,255,0.8);
+            color: #2c3e50;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5);
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .performance-input {
+            background: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.7em;
+            width: 40px;
+            text-align: center;
+            margin-left: 5px;
+        }
+        
+        .performance-input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .performance-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .scheduled-checkbox {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            cursor: pointer;
+            accent-color: #28a745;
+            flex-shrink: 0;
+        }
+        
+        .scheduled-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.65em;
+            font-weight: bold;
+            margin-left: 6px;
+            border: 1px solid rgba(255,255,255,0.3);
+            flex-shrink: 0;
+        }
+        
+        .scheduled-indicator.scheduled {
+            background: rgba(40, 167, 69, 0.3);
+            border-color: rgba(40, 167, 69, 0.5);
+            color: #d4edda;
+        }
+        
+        .scheduled-indicator.not-scheduled {
+            background: rgba(220, 53, 69, 0.3);
+            border-color: rgba(220, 53, 69, 0.5);
+            color: #f8d7da;
+        }
+        
+        .performance-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        
+        .performance-circle:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .performance-circle.no-score {
+            background: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        .performance-circle.low-score {
+            background: #dc3545;
+            border-color: #dc3545;
+            animation: pulse-red 2s infinite;
+        }
+        
+        .performance-circle.mid-score {
+            background: #ffc107;
+            border-color: #ffc107;
+            color: #333;
+        }
+        
+        .performance-circle.high-score {
+            background: #28a745;
+            border-color: #28a745;
+            animation: pulse-green 3s infinite;
+        }
+        
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .performance-input-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 2000;
+            min-width: 300px;
+        }
+        
+        .performance-input-modal h4 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+        
+        .performance-input-modal input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .performance-input-modal .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .performance-input-modal button {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .items-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: visible;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .item {
+            background: rgba(255,255,255,0.4);
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 8px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: grab;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .item:hover {
+            background: rgba(255,255,255,0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .item:active {
+            cursor: grabbing;
+        }
+        
+        .item.dragging {
+            opacity: 0.7;
+            transform: rotate(5deg);
+            cursor: grabbing;
+            z-index: 1000;
+        }
+        
+        .quadrant.drag-over {
+            background-color: rgba(255,255,255,0.3) !important;
+            border: 2px dashed #667eea !important;
+        }
+        
+        .item.completed {
+            opacity: 0.6;
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .item.completed .item-title {
+            text-decoration: line-through;
+        }
+        
+        .item-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .item-title-text {
+            font-weight: 600;
+            font-size: 0.75em;
+            color: inherit;
+            margin: 0;
+            line-height: 1.2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .item-details {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            font-size: 0.7em;
+            opacity: 0.9;
+        }
+        
+        .item-duration {
+            background: rgba(255,255,255,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .item-recurrence {
+            background: rgba(255,255,255,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .item-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        
+        .scheduled-checkbox {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            accent-color: #28a745;
+            flex-shrink: 0;
+        }
+        
+        .scheduled-label {
+            font-size: 0.65em;
+            color: inherit;
+            opacity: 0.8;
+            margin-left: 2px;
+            flex-shrink: 0;
+        }
+        
+        .task-type-section {
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .task-type-header {
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-type-header .grace-average {
+            font-size: 0.8em;
+            background: rgba(255,255,255,0.3);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: normal;
+        }
+        
+        .completion-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #667eea;
+            flex-shrink: 0;
+        }
+        
+        .delete-btn {
+            background: rgba(220, 53, 69, 0.7);
+            border: none;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.7em;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .item:hover .delete-btn {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .delete-btn:hover {
+            background: rgba(220, 53, 69, 0.9);
+            transform: scale(1.1);
+        }
+        
+        .item.completed .item-title {
+            text-decoration: line-through;
+        }
+        
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        
+        .item-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .item:hover .item-controls {
+            opacity: 1;
+        }
+        
+        .control-btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.75em;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255,255,255,0.5);
+            transform: scale(1.1);
+        }
+        
+        .calendar-link {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 6px 12px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            font-size: 0.8em;
+            margin-top: 8px;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .calendar-link:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-1px);
+        }
+        
+        .item-title {
+            font-weight: 600;
+            font-size: 0.8em;
+            color: inherit;
+            margin: 0;
+            padding-right: 70px;
+            line-height: 1.3;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            min-font-size: 8px;
+        }
+        
+        .item-priority {
+            font-size: 0.75em;
+            opacity: 0.8;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        
+        .grace-indicator {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        
+        .input-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .input-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .primary-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .primary-fields textarea {
+            grid-column: 1 / -1;
+        }
+        
+        .core-selects {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-items: center;
+        }
+        
+        .core-selects select {
+            width: 100%;
+            max-width: 250px;
+        }
+        
+        .optional-fields {
+            margin-bottom: 20px;
+        }
+        
+        .optional-fields input,
+        .optional-fields select {
+            color: #888 !important;
+        }
+        
+        .optional-fields input::placeholder {
+            color: #aaa !important;
+        }
+        
+        input[type="text"], input[type="number"], select, textarea {
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            grid-column: 1 / -1;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .secondary-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+        }
+        
+        .secondary-btn:hover {
+            box-shadow: 0 15px 30px rgba(108, 117, 125, 0.4);
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .legend-item:hover {
+            background: rgba(255,255,255,0.8);
+            transform: translateY(-2px);
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #667eea;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .words-of-wisdom {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border: 1px solid #dee2e6;
+        }
+        
+        .wisdom-tab {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px 10px 0 0;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .wisdom-tab::before {
+            content: '💡';
+            margin-right: 8px;
+        }
+        
+        .wisdom-refresh-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .wisdom-refresh-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .wisdom-refresh-btn:active {
+            transform: translateY(0);
+        }
+        
+        .wisdom-content {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 0 15px 15px 15px;
+            border: 2px solid #667eea;
+            font-style: italic;
+            color: #2c3e50;
+            line-height: 1.6;
+            font-size: 1em;
+        }
+        
+        .filter-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .filter-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-controls select {
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            min-width: 180px;
+        }
+        
+        .filter-controls select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .unutilized-time-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #dee2e6;
+        }
+        
+        .unutilized-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .unutilized-values {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .unutilized-values span {
+            color: #28a745;
+        }
+        
+        @media (max-width: 768px) {
+            .matrix-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(6, minmax(150px, auto));
+                min-height: auto;
+                gap: 10px;
+            }
+            
+            .quadrant-held {
+                grid-column: 1;
+                order: 5;
+            }
+            
+            .quadrant-completed {
+                grid-column: 1;
+                order: 6;
+            }
+            
+            .quadrant-1 {
+                order: 1;
+            }
+            
+            .quadrant-2 {
+                order: 2;
+            }
+            
+            .quadrant-3 {
+                order: 3;
+            }
+            
+            .quadrant-4 {
+                order: 4;
+            }
+            
+            .quadrant {
+                padding: 12px 12px 50px 12px;
+            }
+            
+            .quadrant-title {
+                font-size: 1.1em;
+            }
+            
+            .quadrant-subtitle {
+                font-size: 0.9em;
+                margin-bottom: 15px;
+            }
+            
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .primary-fields {
+                grid-template-columns: 1fr;
+            }
+            
+            .core-selects {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .core-selects select {
+                max-width: none;
+            }
+            
+            .grace-items {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .pie-chart {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .wisdom-tab {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+                padding: 15px 20px;
+            }
+            
+            .wisdom-refresh-btn {
+                align-self: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .quadrant {
+                padding: 15px;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .container {
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 20px !important;
+                page-break-inside: avoid;
+            }
+            
+            .container::before {
+                display: none;
+            }
+            
+            .input-section, .button-group, .filter-section {
+                display: none !important;
+            }
+            
+            .matrix-container {
+                gap: 10px !important;
+                min-height: 350px !important;
+                page-break-inside: avoid;
+            }
+            
+            .quadrant {
+                padding: 10px !important;
+                min-height: 120px !important;
+                break-inside: avoid;
+            }
+            
+            .quadrant-title {
+                font-size: 1.2em !important;
+            }
+            
+            .item-title {
+                font-size: max(8px, 0.7em) !important;
+            }
+            
+            .time-allocation-chart {
+                page-break-inside: avoid;
+                margin-top: 20px !important;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr 1fr !important;
+            }
+            
+            .pie-chart {
+                width: 200px !important;
+                height: 200px !important;
+            }
+            
+            .legend {
+                page-break-inside: avoid;
+            }
+            
+            .progress-bar {
+                display: none !important;
+            }
+        }
+        
+        /* Responsive Font Scaling */
+        @media (max-width: 1200px) {
+            .item-title {
+                font-size: max(8px, 0.75em);
+            }
+            
+            .quadrant-title {
+                font-size: 1.3em;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .item-title {
+                font-size: max(8px, 0.7em);
+            }
+            
+            .quadrant-title {
+                font-size: 1.2em;
+            }
+            
+            .quadrant {
+                padding: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -14,6 +1615,19 @@
                     <div class="grace-item">💡 <strong>C</strong>reate Solutions</div>
                     <div class="grace-item">🌟 <strong>E</strong>nrich Others</div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Words of Wisdom Section -->
+        <div class="words-of-wisdom">
+            <div class="wisdom-tab">
+                <span>Words of Wisdom</span>
+                <button class="wisdom-refresh-btn" onclick="refreshWisdom()" title="Get new wisdom">
+                    🔄 New Quote
+                </button>
+            </div>
+            <div class="wisdom-content" id="wisdom-content">
+                <!-- Random quote will be inserted here -->
             </div>
         </div>
         
@@ -138,7 +1752,12 @@
                     ⏸️ HELD
                     <span class="quadrant-count" id="count-held">0</span>
                 </div>
-                <div class="quadrant-subtitle">No Resources Available</div>
+                <div class="quadrant-subtitle">
+                    No Resources Available
+                    <button id="toggle-held-sort" onclick="toggleHeldSort()" style="margin-left: 10px; padding: 4px 8px; font-size: 0.7em; background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.5); border-radius: 6px; cursor: pointer; color: inherit;" title="Toggle between date and GRACE score sorting">
+                        📅 Date
+                    </button>
+                </div>
                 <div class="items-list" id="quadrant-held-items"></div>
                 <div class="quadrant-grace-score" id="grace-held">G.R.A.C.E: 0</div>
             </div>
@@ -161,10 +1780,13 @@
         
         <div class="input-section">
             <h3>Add New Task</h3>
-            <div class="input-group">
-                <!-- Top row - primary fields -->
+            <div class="primary-fields">
+                <!-- Top row - title and description -->
                 <input type="text" id="item-title" placeholder="Task title...">
                 <textarea id="item-description" placeholder="Detailed description (optional)..."></textarea>
+            </div>
+            <div class="core-selects">
+                <!-- Centered row - core selection fields -->
                 <select id="task-type">
                     <option value="">Select Task Type</option>
                     <option value="Church">⛪ Church</option>
@@ -270,6 +1892,361 @@
     <input type="file" id="import-file" accept=".json,.csv" style="display: none;">
 
     <script>
+        // Words of Wisdom rotation system
+        const wisdomQuotes = [
+            // ESV Bible Verses - Wisdom
+            "Trust in the Lord with all your heart, and do not lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight. - Proverbs 3:5-6",
+            "Where there is no guidance, a people falls, but in an abundance of counselors there is safety. - Proverbs 11:14",
+            "Without counsel plans fail, but with many advisers they succeed. - Proverbs 15:22",
+            "And he said to man, 'Behold, the fear of the Lord, that is wisdom, and to turn away from evil is understanding.' - Job 28:28",
+            "If any of you lacks wisdom, let him ask God, who gives generously to all without reproach, and it will be given him. - James 1:5",
+            
+            // ESV Bible Verses - Leadership
+            "But it shall not be so among you. But whoever would be great among you must be your servant, and whoever would be first among you must be slave of all. - Mark 10:43-44",
+            "Let no one despise you for your youth, but set the believers an example in speech, in conduct, in love, in faith, in purity. - 1 Timothy 4:12",
+            "Do nothing from selfish ambition or conceit, but in humility count others more significant than yourselves. Let each of you look not only to his own interests, but also to the interests of others. - Philippians 2:3-4",
+            "Only be strong and very courageous, being careful to do according to all the law that Moses my servant commanded you. Do not turn from it to the right hand or to the left, that you may have good success wherever you go. - Joshua 1:7",
+            "Obey your leaders and submit to them, for they are keeping watch over your souls, as those who will have to give an account. Let them do this with joy and not with groaning, for that would be of no advantage to you. - Hebrews 13:17",
+            
+            // ESV Bible Verses - Work Excellence
+            "Whatever you do, work heartily, as for the Lord and not for men, knowing that from the Lord you will receive the inheritance as your reward. You are serving the Lord Christ. - Colossians 3:23-24",
+            "Whatever your hand finds to do, do it with your might, for there is no work or thought or knowledge or wisdom in Sheol, to which you are going. - Ecclesiastes 9:10",
+            "A slack hand causes poverty, but the hand of the diligent makes rich. - Proverbs 10:4",
+            "For even when we were with you, we would give you this command: If anyone is not willing to work, let him not eat. - 2 Thessalonians 3:10",
+            "The Lord God took the man and put him in the garden of Eden to work it and keep it. - Genesis 2:15",
+            
+            // ESV Bible Verses - Integrity
+            "The integrity of the upright guides them, but the crookedness of the treacherous destroys them. - Proverbs 11:3",
+            "A false balance is an abomination to the Lord, but a just weight is his delight. - Proverbs 11:1",
+            "One who is faithful in a very little is also faithful in much, and one who is dishonest in a very little is also dishonest in much. - Luke 16:10",
+            "To do righteousness and justice is more acceptable to the Lord than sacrifice. - Proverbs 21:3",
+            "For we aim at what is honorable not only in the Lord's sight but also in the sight of man. - 2 Corinthians 8:21",
+            
+            // ESV Bible Verses - Stewardship
+            "As each has received a gift, use it to serve one another, as good stewards of God's varied grace. - 1 Peter 4:10",
+            "His master said to him, 'Well done, good and faithful servant. You have been faithful over a little; I will set you over much. Enter into the joy of your master.' - Matthew 25:21",
+            "Moreover, it is required of stewards that they be found faithful. - 1 Corinthians 4:2",
+            "If then you have not been faithful in the unrighteous wealth, who will entrust to you the true riches? And if you have not been faithful in that which is another's, who will give you that which is your own? - Luke 16:11-12",
+            "Let the favor of the Lord our God be upon us, and establish the work of our hands upon us; yes, establish the work of our hands! - Psalm 90:17",
+            
+            // ESV Bible Verses - Purpose
+            "And we know that for those who love God all things work together for good, for those who are called according to his purpose. - Romans 8:28",
+            "who saved us and called us to a holy calling, not because of our works but because of his own purpose and grace, which he gave us in Christ Jesus before the ages began. - 2 Timothy 1:9",
+            "For we are his workmanship, created in Christ Jesus for good works, which God prepared beforehand, that we should walk in them. - Ephesians 2:10",
+            "For everything there is a season, and a time for every matter under heaven. - Ecclesiastes 3:1",
+            "So, whether you eat or drink, or whatever you do, do all to the glory of God. - 1 Corinthians 10:31",
+            
+            // ESV Bible Verses - Character Development
+            "But the fruit of the Spirit is love, joy, peace, patience, kindness, goodness, faithfulness, gentleness, self-control; against such things there is no law. - Galatians 5:22-23",
+            "For this very reason, make every effort to supplement your faith with virtue, and virtue with knowledge, and knowledge with self-control, and self-control with steadfastness, and steadfastness with godliness, and godliness with brotherly affection, and brotherly affection with love. - 2 Peter 1:5-7",
+            "Finally, brothers, whatever is true, whatever is honorable, whatever is just, whatever is pure, whatever is lovely, whatever is commendable, if there is any excellence, if there is anything worthy of praise, think about these things. - Philippians 4:8",
+            "Keep a close watch on yourself and on the teaching. Persist in this, for by so doing you will save both yourself and your hearers. - 1 Timothy 4:16",
+            "Do not be conformed to this world, but be transformed by the renewal of your mind, that by testing you may discern what is the will of God, what is good and acceptable and perfect. - Romans 12:2",
+            
+            // Professional Wisdom Quotes
+            "Don't expect Boeing to be there on your deathbed - Jim Williams, Boeing Vice President, 767-2C",
+            "Safety, Compliance, and Conformity is based on a foundational alignment of design, analysis, manufacturing plans and how the work is performed and inspected - Robert Rothschilds, TF",
+            "Form follows function. Do you really know what your part needs to do so you can design it to perform optimally? - Ken Cominsky, ATF Product Development Structures",
+            "Keep it simple, add complexity only as needed - Ken Cominsky, ATF Product Development Structures",
+            "Start at the joints, work your way out - Ken Cominsky, ATF Product Development Structures",
+            "Simple straight load paths are good. Simple straight load paths for really big loads are great! - Ken Cominsky, ATF Product Development Structures",
+            "Integration is the art of compromise; stakeholders will never be completely happy with your well integrated design - Ken Cominsky, ATF Product Development Structures",
+            "Never fall in love with your concept, let the numbers justify its value - Ken Cominsky, ATF Product Development Structures",
+            "Set aside preconceptions and biases and ask how your idea buys its way onto the airplane - Ken Cominsky, ATF Product Development Structures",
+            "For what does it profit a man to gain the whole world and forfeit his soul? - Jesus Christ, Mark 8:36",
+            "If it be not fitting, do it not. If it be not true, speak it not. Ever maintain thine own purpose and resolution free from compulsion and necessity - Marcus Aurelius, Meditations",
+            "We are what we repeatedly do - Aristotle",
+            "Take the high ground, or the high ground will take you - Jocko Willink",
+            "My life is not only about my strengths and virtues; it is also about my liabilities and my limits, my trespasses and my shadow - Parker Palmer, Let Your Life Speak",
+            "What am I doing, what can I be doing better, and how can I help? - Marc Allen, SVP Boeing Global Strategy",
+            "Hold the standard. Ask for help. Fix it. Do whatever's necessary. But don't cheat - Chris Young, chef and author",
+            "We must learn the consequence of negligence - it's not just what we do, it's what we don't do that's important as well. We are guilty by omission - Matthew McConaughey, Greenlights",
+            "Nothing predicts future behavior as much as past impunity - Darius Rjali",
+            "It's not what happens to you, but how you react to it that matters - Epictetus",
+            "An error does not become a mistake until you refuse to correct it - Carol Tavris and Elliot Aronson, Mistakes were made",
+            "There are a million cheap seats in the world today filled with people who will never be brave with their lives but who will spend every ounce of energy they have hurling advice and judgment at those who dare greatly - Brene Brown, Dare to Lead",
+            "To be sure, a human being is a finite thing, and his/her freedom is restricted. It is not freedom from conditions, but it is freedom to take a stand toward the conditions - Viktor Frankl",
+            "The goal is healthy relationships despite the tension between logic and empathy - Matt Merkel",
+            "Every single decision you make has an impact on yourself and others - Sir Brendan Nelsen",
+            "It's a dangerous thing to speaking without thought with speaking the truth - Benoit Blanc, The Glass Onion",
+            "Another path is to first recognize that when we get into situations where our personal financial benefit stands in opposition to our moral standards, we are able to bend reality - Dan Ariely, Predictably Irrational",
+            "A man who lies to himself and listens to his own lie comes to such a pass that he cannot distinguish the truth within him, or around him - Fyodor Dostoyevsky, The Brothers Karamazov",
+            "It is difficult to get a man to understand something, when his salary depends upon his not understanding it - Upton Sinclair",
+            "To make a man covet a thing, it is only necessary to make the thing difficult to obtain - Mark Twain",
+            "Overcoming the need to create outsiders is our biggest challenge as human beings. It is the key to ending deep inequality - Melinda Gates",
+            "We are not here to tolerate our differences. We are here to accept them - Matthew McConaughey, Greenlights",
+            "In sum, remember this, that within a very little while, both thou and he shall both be dead, and after a little while more, not so much as your names and memories shall be remaining - Marcus Aurelius, Meditations",
+            "If you were to give me six hours to cut down a tree, I would spend the first four sharpening my axe - Abraham Lincoln",
+            "A strategy that fails to define a variety of plausible and feasible immediate actions is missing a critical component - Richard Rumelt, Good Strategy Bad Strategy",
+            "Rushing breeds defects. Working with a sense of urgency is ok - Andrew Robertson, Chief Engineer Millennium Space Systems",
+            "Slow is smooth and smooth is fast - Navy Seals",
+            "Become as articulate about describing excellence as you are about describing failure - Don Clifton, First, Break All the Rules",
+            "If I have 1000 ideas and only one turns out good, I am satisfied - Alfred Nobel",
+            "Absence of evidence is not evidence of absence - Carl Sagan",
+            "What is the data you are going to get, what is the range of values you expect, and what are you going to do as a result - Mark Stockton, Boeing Director of Engineering",
+            "It is much easier to sell, 'look what I have done for you,' than 'look what I've avoided for you' - Nasim Nicholas Taleb, Black Swan",
+            "Remember what your decision was, why it was, and what the outcome was, and learn and provide addition - Eric Nelsen, Boeing Senior Manager",
+            "Strategy involves focus and, therefore, choice. And choice means setting aside some goals in favor of others - Richard Rumelt, Good Strategy Bad Strategy",
+            "People and teams should be evaluated on their ability to solve problems, not on how many tasks they perform - Annmarie Neal",
+            "Sometimes you need to stop doing things you love in order to nurture the one thing that matters most - Scott Belsky",
+            "There are no isolated problems - Melinda Gates",
+            "It always seems impossible, until it is done - Nelson Mandela",
+            "The real voyage of discovery consists not in seeking new landscapes but in having new eyes - Michael Proust",
+            "I talk a lot about the relentless pursuit of perfection... It's about creating an environment in which people refuse to accept mediocrity - Robert Iger",
+            "Is any man so foolish as to fear change, to which all things that once were not owe their being? - Marcus Aurelius, Meditations",
+            "Design is not just what it looks like and feels like. Design is how it works - Steve Jobs",
+            "If you are leading and no one is following all you are doing is going for a walk - John Maxwell",
+            "Calm is contagious - Rorke Denver, former Navy Seal Commander",
+            "If you want to go quickly, go alone, but if you want to go far, go together - African Proverb",
+            "Trying to get everyone to like you is a sign of mediocrity - Colin Powell",
+            "Make your peace with the fact that saying 'no' often requires trading popularity for respect - Greg McKeown, Essentialism",
+            "Ask the questions you need to ask, admit without apology what you don't understand - Robert Iger",
+            "We will become better teachers not by trying to fill the potholes in our souls, but by knowing them so well we can avoid falling into them - Parker Palmer, Let Your Life Speak",
+            "You have convey your priorities clearly and repeatedly - Robert Iger",
+            "The work cannot be understood without numbers, and it cannot be understood with numbers alone - Hans Rosling",
+            "Unrestrained empowerment can be a value killer - Don Clifton, First, Break All the Rules",
+            "It is hard to imagine a more stupid or more dangerous way of making decisions than by putting those decisions in the hands of people who pay no price for being wrong - Thomas Sowell",
+            "Is it that we can't do, or that it is hard to do, there is a difference, and as leaders we have to challenge and understand the difference - Chris Raymond, Boeing Chief Sustainability Officer",
+            "As a leader you must be the bridge; to connect people to each other, to connect people to ideas, to connect people to their full potential - Bruce Moravec, VP of Production Engineering",
+            "All problems are interpersonal relationship problems - Ichiro Kishimi and Fumitake Koga, The Courage to Be Disliked",
+            "Surround yourself with people of two key qualities, people who are ready to bleed for what they believe in, and those who are overenthusiastic - Brendan Nelson, VP of Boeing Australia",
+            "You don't have to be on a certain place of an org chart, to see someone struggling, stop, and help them - Andrew Robertson, Chief Engineer Millennium Space Systems",
+            "If you are planning to do something with your life, if you have a 10-year plan of how to get there, you should ask: Why can't I do this in 6 months? - Peter Thiel",
+            "Gateways are about diversity. Pathways are about inclusion - Dolly Chugh, How Good People Fight Bias",
+            "Be curious, be humble, and get to know your people - Dan Da Silva",
+            "What do you love...about what you do? - Justice Sonya Sotomayor",
+            "Leaders must either invest a reasonable amount of time attending to fears and feelings, or squander an unreasonable amount of time trying to manage ineffective and unproductive behavior - Brene Brown, Dare to Lead",
+            "Asking for ideas and not responding is worse than not responding at all - Jim Whitehurst, Former Delta COO",
+            "If you think you are super smart and you don't listen to people, you can reach into areas outside your expertise and make bad decisions with big impact - Melinda Gates",
+            "I disagree and commit all the time - Jeff Bezos, 2017 Letter to Shareholders",
+            "I have to once again state my amazement at the aspect of human nature that allows us to mix the most rigorous skepticism and the most acute gullibility - Nasim Nicholas Taleb, Black Swan",
+            "Any useful idea about the future, must appear ridiculous, not every ridiculous idea is useful - Dator's Second Law of Futures",
+            "Our SENSES can fail us; our MINDS mislead us; and our HERD blinds us - Kathryn Schulz, Being Wrong",
+            "The more interested someone is in telling me something, the less interested they are in listening to me - Ben Hempstead, Chief People Officer, Electro Impact",
+            "When you don't know who people are and depersonalize groups, then you get into problems - Michael Schroepher, Facebook Chief Engineer",
+            "What is really divisive is telling someone who is standing in the rain that it is not raining - Dolly Chugh, How Good People Fight Bias",
+            "The only help needed we can't get is the help needed we don't ask for - Mark Stockton, VP of Engineering - 787 Program",
+            "The only person who would be crippled by, and suffer from, that anger is the person who's angry, not the person inflicting the harm - Elaine Siu, Your Next 40,000 Hours",
+            "I mentor when I see something and I say, 'I want to see that grow' - Sheryl Sandberg",
+            "If you receive a gift, you keep it alive not by clinging to it, but by passing it along - Parker Palmer, Let Your Life Speak",
+            "If you want to change the world you have to understand it. Following your blame instinct isn't going to help - Hans Rosling",
+            "What got you there, won't get you there, keep growing - Kristen Brower VP HR BGS",
+            "If it's not Hell Yes! It is a no - Derek Sivers",
+            "Passion is a force multiplier, and that offsets everything else - Michael Schroepher, Facebook Chief Engineer",
+            "Know Thyself - Inscribed at the Temple of Delphi, Greece",
+            "Be who needed when you were younger - Brad Montague, Being Be Better Grown Ups",
+            "For it is a thing very possible that a man should be a very divine man, and yet be altogether unknown - Marcus Aurelius, Meditations",
+            "You are only entitled to the action, never to its fruits - Bhagavad Gita",
+            "Tell me to what you pay attention and I will tell you who you are - Jose Ortega y Gasset",
+            "stick with the clarity of skills, knowledge, and talents - Don Clifton, First, Break all the Rules",
+            "Knowing who we are is hard. Eliminate who we're not first, and we'll be able to find ourselves where we need to be - Matthew McConaughey, Greenlights",
+            "Knowing what you will say no to, is better than knowing what you will say yes to - Jason Fried and David Heinemeier Hansson, It Doesn't Have to be Crazy at Work",
+            "Finding something important and meaningful in your life is perhaps the most productive use of your time and energy - Mark Manson",
+            "You must want to be a butterfly so badly, you are willing to give up being a caterpillar - Sekou Andrews",
+            "Don't let ambition get ahead of opportunity - Robert Iger",
+            "If you seek vocation without understanding the material you are working with, what you build with your life will be ungainly - Parker Palmer, Let your Life Speak",
+            "The moment that we believe that success is determined by an ingrained level of ability, we will be brittle in the face of adversity - Josh Waitzkin",
+            "A great work ethic isn't about working whenever your called upon. It's about doing what you say you're going to do - Jason Fried and David Heinemeier Hansson",
+            "Lack of time, is lack of priorities - Derek Sivers",
+            "are you on offense or defense?...which of those did you assign yourself, and which of those are you doing to please someone else? - Chris Sacca",
+            "Meddle not with many things, if thou wilt live cheerfully - Marcus Aurelius, Meditations",
+            "Self-care is never a selfish act - it is simply good stewardship of the only gift I have - Parker Palmer, Let Your Life Speak",
+            "Success is: Do your kids remember you for being the best dad? - Peter Attia",
+            "And if you say you're not creative, look at how much you're missing out on just because you've told yourself that - Robert Rodriguez",
+            "Never accept a bad deal, for a good strategy - Marc Allen, SVP Boeing Global Strategy",
+            "No deal is better than a bad deal - Chris Voss, Never Split the Difference",
+            "When you allow the variable of time to trigger the perception of imaginary future losses, you have taken yourself hostage - Chris Voss, Never Split the Difference",
+            "Do not compute the odds from the vantage point of the winning gambler - Nasim Nicholas Taleb, Black Swan",
+            "I've gotten a lot of miles out of a beautiful bottle of wine, not just for the taste and the buzz, but the symbolism of delighting in something that goes away - BJ Miller",
+            "I'm always asked, 'What's the secret to success?' But there are no secrets. Be humble. Be Hungry. And always be the hardest worker in the room - Dwayne Johnson",
+            "The moment the alarm goes off is the first test; it sets the tone for the rest of the day - Jocko Willink",
+            "We have met the enemy, and he is us - Walt Kelley Pogo",
+            "The mystery of life isn't a problem to solve, but a reality to experience - Frank Herbert",
+            "I am an old man and I have known a great many troubles, but most of them never happened - Mark Twain",
+            "Clarity of writing indicates clarity of thinking - Matt Wullenweg, lead developer of WordPress",
+            "The speed of Light is faster than the speed of Sound, so be Brighter not Louder - Gary Hamatani, Former 737 Chief Program Engineer"
+        ];
+        
+        function getRandomWisdom() {
+            const randomIndex = Math.floor(Math.random() * wisdomQuotes.length);
+            return wisdomQuotes[randomIndex];
+        }
+        
+        function refreshWisdom() {
+            const wisdomElement = document.getElementById('wisdom-content');
+            wisdomElement.style.opacity = '0.5';
+            
+            setTimeout(() => {
+                wisdomElement.textContent = getRandomWisdom();
+                wisdomElement.style.opacity = '1';
+            }, 200);
+        }
+        
+        // Drag and Drop functionality
+        let draggedTask = null;
+        let draggedTaskElement = null;
+        
+        function makeDraggable(itemElement, task) {
+            itemElement.draggable = true;
+            
+            itemElement.addEventListener('dragstart', function(e) {
+                draggedTask = task;
+                draggedTaskElement = itemElement;
+                itemElement.classList.add('dragging');
+                
+                // Set drag effect
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', itemElement.outerHTML);
+            });
+            
+            itemElement.addEventListener('dragend', function(e) {
+                itemElement.classList.remove('dragging');
+                draggedTask = null;
+                draggedTaskElement = null;
+                
+                // Remove drag-over class from all quadrants
+                document.querySelectorAll('.quadrant').forEach(q => {
+                    q.classList.remove('drag-over');
+                });
+            });
+        }
+        
+        function makeDroppable(quadrantElement, quadrantNumber) {
+            quadrantElement.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                quadrantElement.classList.add('drag-over');
+            });
+            
+            quadrantElement.addEventListener('dragleave', function(e) {
+                // Only remove drag-over if we're actually leaving the quadrant
+                if (!quadrantElement.contains(e.relatedTarget)) {
+                    quadrantElement.classList.remove('drag-over');
+                }
+            });
+            
+            quadrantElement.addEventListener('drop', function(e) {
+                e.preventDefault();
+                quadrantElement.classList.remove('drag-over');
+                
+                if (!draggedTask) return;
+                
+                // Handle dropping on completed quadrant
+                if (quadrantNumber === 'completed') {
+                    if (!draggedTask.completed) {
+                        taskStorage.updateTask(draggedTask.id, { 
+                            completed: true,
+                            completedAt: new Date().toISOString()
+                        });
+                        taskStorage.showNotification(
+                            `✅ Task completed: ${draggedTask.title}`, 
+                            'success'
+                        );
+                    }
+                    return;
+                }
+                
+                // Handle dropping completed task on active quadrant
+                if (draggedTask.completed && quadrantNumber !== 'completed') {
+                    const updates = { 
+                        completed: false,
+                        completedAt: null,
+                        quadrant: quadrantNumber
+                    };
+                    
+                    // Auto-update urgency and importance based on quadrant
+                    switch(quadrantNumber) {
+                        case 1: // Do Now
+                            updates.urgency = 'high';
+                            updates.importance = 'high';
+                            updates.resources = 'Yes';
+                            break;
+                        case 2: // Schedule
+                            updates.urgency = 'low';
+                            updates.importance = 'high';
+                            updates.resources = 'Yes';
+                            break;
+                        case 3: // Delegate
+                            updates.urgency = 'high';
+                            updates.importance = 'low';
+                            updates.resources = 'Yes';
+                            break;
+                        case 4: // Don't Do
+                            updates.urgency = 'low';
+                            updates.importance = 'low';
+                            updates.resources = 'Yes';
+                            break;
+                        case 'held': // Held
+                            updates.resources = 'No';
+                            break;
+                    }
+                    
+                    taskStorage.updateTask(draggedTask.id, updates);
+                    
+                    const quadrantNames = {
+                        1: 'DO NOW',
+                        2: 'SCHEDULE', 
+                        3: 'DELEGATE',
+                        4: 'DON\'T DO',
+                        'held': 'HELD'
+                    };
+                    
+                    taskStorage.showNotification(
+                        `🔄 Task reactivated to ${quadrantNames[quadrantNumber]}: ${draggedTask.title}`, 
+                        'success'
+                    );
+                    return;
+                }
+                
+                // Handle moving between active quadrants
+                if (!draggedTask.completed && draggedTask.quadrant !== quadrantNumber) {
+                    const updates = { quadrant: quadrantNumber };
+                    
+                    // Auto-update urgency and importance based on quadrant
+                    switch(quadrantNumber) {
+                        case 1: // Do Now
+                            updates.urgency = 'high';
+                            updates.importance = 'high';
+                            updates.resources = 'Yes';
+                            break;
+                        case 2: // Schedule
+                            updates.urgency = 'low';
+                            updates.importance = 'high';
+                            updates.resources = 'Yes';
+                            break;
+                        case 3: // Delegate
+                            updates.urgency = 'high';
+                            updates.importance = 'low';
+                            updates.resources = 'Yes';
+                            break;
+                        case 4: // Don't Do
+                            updates.urgency = 'low';
+                            updates.importance = 'low';
+                            updates.resources = 'Yes';
+                            break;
+                        case 'held': // Held
+                            updates.resources = 'No';
+                            break;
+                    }
+                    
+                    taskStorage.updateTask(draggedTask.id, updates);
+                    
+                    const quadrantNames = {
+                        1: 'DO NOW',
+                        2: 'SCHEDULE', 
+                        3: 'DELEGATE',
+                        4: 'DON\'T DO',
+                        'held': 'HELD'
+                    };
+                    
+                    taskStorage.showNotification(
+                        `📋 Task moved to ${quadrantNames[quadrantNumber]}: ${draggedTask.title}`, 
+                        'success'
+                    );
+                }
+            });
+        }
+        
         // Enhanced storage system using IndexedDB for persistence
         let taskStorage = {
             tasks: [],
@@ -278,6 +2255,7 @@
             dbName: 'GRACEMatrix',
             dbVersion: 1,
             completedSortByGrace: false, // Default to date sorting (most recent first)
+            heldSortByGrace: false, // Default to date sorting (oldest first)
             
             async init() {
                 try {
@@ -291,6 +2269,140 @@
                     console.error('Database initialization failed, falling back to memory storage:', error);
                     this.showNotification('⚠️ Using temporary storage - data will not persist', 'error');
                 }
+            },
+            
+            renderHeldTasks(heldTasks) {
+                const container = document.getElementById('quadrant-held-items');
+                
+                if (heldTasks.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; opacity: 0.7; padding: 20px;">No held tasks</div>';
+                    return;
+                }
+                
+                // Group held tasks by task type
+                const tasksByType = {};
+                heldTasks.forEach(task => {
+                    if (!tasksByType[task.taskType]) {
+                        tasksByType[task.taskType] = [];
+                    }
+                    tasksByType[task.taskType].push(task);
+                });
+                
+                // Sort each group by creation date (oldest first) or GRACE score (highest first)
+                Object.keys(tasksByType).forEach(taskType => {
+                    if (this.heldSortByGrace) {
+                        tasksByType[taskType].sort((a, b) => b.graceScore - a.graceScore);
+                    } else {
+                        // Sort by creation date (oldest first)
+                        tasksByType[taskType].sort((a, b) => {
+                            const dateA = new Date(a.createdAt || 0);
+                            const dateB = new Date(b.createdAt || 0);
+                            return dateA - dateB; // Oldest first
+                        });
+                    }
+                });
+                
+                // Define task type order for consistent display
+                const taskTypeOrder = ['Church', 'Family', 'Self', 'Relationships', 'Work', 'Property'];
+                
+                // Render each task type section
+                taskTypeOrder.forEach(taskType => {
+                    if (tasksByType[taskType]) {
+                        const tasks = tasksByType[taskType];
+                        const avgGrace = (tasks.reduce((sum, t) => sum + t.graceScore, 0) / tasks.length).toFixed(1);
+                        
+                        // Create task type section
+                        const typeSection = document.createElement('div');
+                        typeSection.className = 'task-type-section';
+                        
+                        // Create header with average GRACE score and sort indicator
+                        const header = document.createElement('div');
+                        header.className = 'task-type-header';
+                        header.innerHTML = `
+                            <span>${getTaskTypeIcon(taskType)} ${taskType}</span>
+                            <span class="grace-average">
+                                ${this.heldSortByGrace ? `Avg: ${avgGrace}` : `${tasks.length} tasks`}
+                            </span>
+                        `;
+                        typeSection.appendChild(header);
+                        
+                        // Create tasks container for this type
+                        const tasksContainer = document.createElement('div');
+                        tasksContainer.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+                        
+                        // Render tasks for this type
+                        tasks.forEach(task => {
+                            const itemDiv = this.createHeldTaskElement(task);
+                            tasksContainer.appendChild(itemDiv);
+                        });
+                        
+                        typeSection.appendChild(tasksContainer);
+                        container.appendChild(typeSection);
+                    }
+                });
+            },
+            
+            createHeldTaskElement(task) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.dataset.taskId = task.id;
+                itemDiv.onclick = () => openEditModal(task.id);
+                
+                // Check if task is recurring for performance circle
+                const isRecurring = task.recurrence !== 'Non-recurring';
+                
+                // Build task content for held tasks
+                let performanceControl = '';
+                if (isRecurring) {
+                    const score = task.performanceScore;
+                    let circleClass = 'no-score';
+                    let displayText = '?';
+                    
+                    if (score !== null && score !== undefined) {
+                        displayText = Math.round(score);
+                        if (score < 50) {
+                            circleClass = 'low-score';
+                        } else if (score < 85) {
+                            circleClass = 'mid-score';
+                        } else {
+                            circleClass = 'high-score';
+                        }
+                    }
+                    
+                    performanceControl = `
+                        <div class="performance-circle ${circleClass}" 
+                             onclick="event.stopPropagation(); openPerformanceModal(${task.id})" 
+                             title="Performance: ${score || 'No score'}">
+                            ${displayText}
+                        </div>
+                    `;
+                }
+                
+                // Creation date for display
+                const createdDate = task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '';
+                
+                // Layout for held tasks - using same classes as active tasks
+                itemDiv.innerHTML = `
+                    <div class="item-content">
+                        <div class="item-title-text">${task.title}</div>
+                        <div class="item-details">
+                            <span class="item-duration">${task.estimatedTime}h</span>
+                            <span class="item-recurrence">${task.recurrence}</span>
+                            <span style="background: rgba(255,255,255,0.3); padding: 2px 6px; border-radius: 4px; font-weight: 500;" class="item-duration">${task.graceScore}</span>
+                            ${createdDate ? `<span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;" class="item-duration">${createdDate}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="item-controls-row">
+                        ${performanceControl}
+                        <input type="checkbox" 
+                               class="completion-checkbox" 
+                               onclick="event.stopPropagation(); taskStorage.toggleComplete(${task.id})"
+                               title="Mark complete">
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteTask(${task.id})" title="Delete task">×</button>
+                    </div>
+                `;
+                
+                return itemDiv;
             },
             
             async openDatabase() {
@@ -842,9 +2954,10 @@
                     filteredTasks = filteredTasks.filter(task => task.recurrence === recurrenceFilter);
                 }
                 
-                // Separate completed and non-completed tasks
-                const activeTasks = filteredTasks.filter(task => !task.completed);
+                // Separate completed, held, and active tasks
+                const activeTasks = filteredTasks.filter(task => !task.completed && task.quadrant !== 'held');
                 const completedTasks = filteredTasks.filter(task => task.completed);
+                const heldTasks = filteredTasks.filter(task => !task.completed && task.quadrant === 'held');
                 
                 // Sort active tasks by GRACE score (highest first) and render
                 const sortedActiveTasks = activeTasks.sort((a, b) => b.graceScore - a.graceScore);
@@ -855,6 +2968,9 @@
                 
                 // Render completed tasks with special organization
                 this.renderCompletedTasks(completedTasks);
+                
+                // Render held tasks with special organization
+                this.renderHeldTasks(heldTasks);
                 
                 // Update quadrant counts with filtered data (excluding completed from active counts)
                 this.updateQuadrantCounts(filteredTasks);
@@ -1050,8 +3166,8 @@
             },
             
             renderTask(task) {
-                // Skip completed tasks here - they're handled by renderCompletedTasks
-                if (task.completed) return;
+                // Skip completed and held tasks here - they're handled by their special render functions
+                if (task.completed || task.quadrant === 'held') return;
                 
                 const quadrantId = `quadrant-${task.quadrant}-items`;
                 const container = document.getElementById(quadrantId);
@@ -1135,6 +3251,9 @@
                 `;
                 
                 container.appendChild(itemDiv);
+                
+                // Make the task draggable
+                makeDraggable(itemDiv, task);
             }
         };
         
@@ -1217,6 +3336,27 @@
             
             // Show success message
             showNotification('✅ Task updated successfully!', 'success');
+        }
+        
+        function toggleHeldSort() {
+            taskStorage.heldSortByGrace = !taskStorage.heldSortByGrace;
+            
+            // Update button text and icon
+            const button = document.getElementById('toggle-held-sort');
+            if (taskStorage.heldSortByGrace) {
+                button.innerHTML = '🏆 GRACE';
+                button.title = 'Currently sorting by GRACE score (highest first). Click to sort by date held.';
+            } else {
+                button.innerHTML = '📅 Date';
+                button.title = 'Currently sorting by date held (oldest first). Click to sort by GRACE score.';
+            }
+            
+            // Re-render held tasks with new sorting
+            taskStorage.renderAllTasks();
+            
+            // Show notification
+            const sortType = taskStorage.heldSortByGrace ? 'GRACE score (highest first)' : 'date held (oldest first)';
+            taskStorage.showNotification(`⏸️ Held tasks sorted by ${sortType}`, 'info');
         }
         
         function toggleCompletedSort() {
@@ -1657,44 +3797,6 @@
             // Organizing and planning (5-8 points)
             else if (organizingKeywords.some(keyword => text.includes(keyword))) {
                 architectScore += 6;
-            }
-            // Work process improvement (4-7 points)
-            else if (taskType === 'Work' && (text.includes('improve') || text.includes('process') || text.includes('method'))) {
-                architectScore += 5;
-            }
-            // Property systems and organization (4-7 points)
-            else if (taskType === 'Property' && (text.includes('organize') || text.includes('system') || text.includes('plan'))) {
-                architectScore += 5;
-            }
-            // Personal organization systems (3-6 points)
-            else if (taskType === 'Self' && (text.includes('routine') || text.includes('habit') || text.includes('organize'))) {
-                architectScore += 4;
-            }
-            // Sleep routine as system architecture
-            else if (taskType === 'Self' && text.includes('sleep')) {
-                if (hours >= 7 && text.includes('routine')) {
-                    architectScore += 4; // Consistent sleep schedule is good systems thinking
-                }
-            }
-            // Family systems and routines (2-5 points)
-            else if (taskType === 'Family' && (text.includes('routine') || text.includes('schedule') || text.includes('organize'))) {
-                architectScore += 3;
-            }
-            
-            if (systemKeywords.some(keyword => text.includes(keyword)) && efficiencyKeywords.some(keyword => text.includes(keyword))) {
-                architectScore += 10;
-                // Complex systems take more time
-                if (hours >= 4) {
-                    architectScore += 2;
-                }
-            } else if (systemKeywords.some(keyword => text.includes(keyword))) {
-                architectScore += 8;
-            } else if (efficiencyKeywords.some(keyword => text.includes(keyword))) {
-                architectScore += 7;
-            }
-            // Organizing and planning (5-8 points)
-            else if (organizingKeywords.some(keyword => text.includes(keyword))) {
-                architectScore += 6;
                 // Regular planning sessions
                 if ((text.includes('plan') || text.includes('organize')) && (recurrence.toLowerCase() === 'weekly' || recurrence.toLowerCase() === 'daily')) {
                     architectScore += 2;
@@ -1894,7 +3996,6 @@
                         current += '"';
                         i++;
                     } else {
-                        inQuotes = !inQuotes;
                     }
                 } else if (char === ',' && !inQuotes) {
                     result.push(current);
@@ -2176,6 +4277,16 @@
         
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Set random wisdom quote
+            document.getElementById('wisdom-content').textContent = getRandomWisdom();
+            
+            // Make quadrants droppable
+            makeDroppable(document.querySelector('.quadrant-1'), 1);
+            makeDroppable(document.querySelector('.quadrant-2'), 2);
+            makeDroppable(document.querySelector('.quadrant-3'), 3);
+            makeDroppable(document.querySelector('.quadrant-4'), 4);
+            makeDroppable(document.querySelector('.quadrant-held'), 'held');
+            
             // Show loading message
             taskStorage.showNotification('🔄 Loading your GRACE matrix...', 'info');
             
@@ -2189,1196 +4300,4 @@
         });
     </script>
 </body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GRACE-Eisenhower Priority Matrix</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 100vw;
-            width: 100%;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-        
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-        }
-        
-        .header h1 {
-            color: #2c3e50;
-            margin: 0 0 15px 0;
-            font-size: 2.2em;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .grace-subtitle {
-            color: #7f8c8d;
-            font-size: 1em;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        
-        .grace-framework {
-            color: #2c3e50;
-            padding: 20px;
-            margin-bottom: 40px;
-            text-align: center;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 15px;
-            border: 1px solid #dee2e6;
-        }
-        
-        .grace-items {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .grace-item {
-            padding: 12px 15px;
-            font-size: 1em;
-            font-weight: 600;
-            color: #2c3e50;
-            background: rgba(255,255,255,0.8);
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .grace-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-        }
-        
-        .time-allocation-chart {
-            background: rgba(255,255,255,0.9);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .chart-title {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        
-        .charts-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-top: 20px;
-        }
-        
-        .chart-section h4 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-        }
-        
-        .pie-chart {
-            width: 280px;
-            height: 280px;
-            margin: 0 auto 20px;
-            position: relative;
-        }
-        
-        .pie-chart svg {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-        
-        .pie-slice {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .pie-slice:hover {
-            opacity: 0.8;
-            transform: scale(1.05);
-            transform-origin: center;
-        }
-        
-        .chart-legend {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .legend-entry {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px;
-            background: rgba(255,255,255,0.7);
-            border-radius: 8px;
-            font-size: 0.9em;
-            transition: all 0.2s ease;
-        }
-        
-        .legend-entry:hover {
-            background: rgba(255,255,255,0.9);
-            transform: translateY(-1px);
-        }
-        
-        .legend-color-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        
-        .legend-text {
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        .no-data-message {
-            color: #6c757d;
-            font-style: italic;
-            padding: 40px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-        
-        .stats-bar {
-            display: flex;
-            justify-content: space-around;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .stat-item {
-            text-align: center;
-            padding: 10px;
-        }
-        
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-            display: block;
-        }
-        
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-        
-        .matrix-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: minmax(200px, auto) minmax(400px, auto) minmax(150px, auto) minmax(150px, auto);
-            gap: 15px;
-            margin-bottom: 40px;
-            border: 3px solid #2c3e50;
-            border-radius: 15px;
-            overflow: hidden;
-            position: relative;
-            width: 100%;
-            max-width: 100%;
-        }
-        
-        .quadrant {
-            padding: 15px 15px 60px 15px;
-            border: 2px solid #ecf0f1;
-            position: relative;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: visible;
-            display: flex;
-            flex-direction: column;
-            word-wrap: break-word;
-        }
-        
-        .quadrant:hover {
-            transform: scale(1.01);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-            z-index: 1;
-        }
-        
-        .quadrant-held {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            color: #495057;
-            grid-column: 1 / -1;
-            position: relative;
-        }
-        
-        .quadrant-completed {
-            background: linear-gradient(135deg, #d4edda, #c3e6cb);
-            color: #155724;
-            grid-column: 1 / -1;
-            position: relative;
-        }
-        
-        .quadrant-1 {
-            background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
-            color: #2c3e50;
-        }
-        
-        .quadrant-2 {
-            background: linear-gradient(135deg, #ffd3a5, #fdb99b);
-            color: #2c3e50;
-        }
-        
-        .quadrant-3 {
-            background: linear-gradient(135deg, #c5a3ff, #f093fb);
-            color: #2c3e50;
-        }
-        
-        .quadrant-4 {
-            background: linear-gradient(135deg, #ffa8b6, #ffb6a3);
-            color: #2c3e50;
-        }
-        
-        .quadrant-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 12px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .quadrant-count {
-            background: rgba(255,255,255,0.7);
-            color: #2c3e50;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            font-weight: normal;
-        }
-        
-        .quadrant-subtitle {
-            font-size: 1em;
-            opacity: 0.8;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        
-        .quadrant-grace-score {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background: rgba(255,255,255,0.8);
-            color: #2c3e50;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 0.7em;
-            font-weight: bold;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.5);
-            z-index: 10;
-            pointer-events: none;
-        }
-        
-        .quadrant-performance-score {
-            position: absolute;
-            bottom: 8px;
-            left: 8px;
-            background: rgba(255,255,255,0.8);
-            color: #2c3e50;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 0.7em;
-            font-weight: bold;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.5);
-            z-index: 10;
-            pointer-events: none;
-        }
-        
-        .performance-input {
-            background: rgba(255,255,255,0.3);
-            border: 1px solid rgba(255,255,255,0.4);
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: white;
-            font-size: 0.7em;
-            width: 40px;
-            text-align: center;
-            margin-left: 5px;
-        }
-        
-        .performance-input:focus {
-            outline: none;
-            background: rgba(255,255,255,0.5);
-        }
-        
-        .performance-input::placeholder {
-            color: rgba(255,255,255,0.7);
-        }
-        
-        .scheduled-checkbox {
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-            cursor: pointer;
-            accent-color: #28a745;
-            flex-shrink: 0;
-        }
-        
-        .scheduled-indicator {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(255,255,255,0.2);
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 0.65em;
-            font-weight: bold;
-            margin-left: 6px;
-            border: 1px solid rgba(255,255,255,0.3);
-            flex-shrink: 0;
-        }
-        
-        .scheduled-indicator.scheduled {
-            background: rgba(40, 167, 69, 0.3);
-            border-color: rgba(40, 167, 69, 0.5);
-            color: #d4edda;
-        }
-        
-        .scheduled-indicator.not-scheduled {
-            background: rgba(220, 53, 69, 0.3);
-            border-color: rgba(220, 53, 69, 0.5);
-            color: #f8d7da;
-        }
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7em;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-left: 8px;
-            border: 2px solid rgba(255,255,255,0.3);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            flex-shrink: 0;
-        }
-        
-        .performance-circle:hover {
-            transform: scale(1.2);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        }
-        
-        .performance-circle.no-score {
-            background: #6c757d;
-            border-color: #6c757d;
-        }
-        
-        .performance-circle.low-score {
-            background: #dc3545;
-            border-color: #dc3545;
-            animation: pulse-red 2s infinite;
-        }
-        
-        .performance-circle.mid-score {
-            background: #ffc107;
-            border-color: #ffc107;
-            color: #333;
-        }
-        
-        .performance-circle.high-score {
-            background: #28a745;
-            border-color: #28a745;
-            animation: pulse-green 3s infinite;
-        }
-        
-        @keyframes pulse-red {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        @keyframes pulse-green {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-        
-        .performance-input-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            z-index: 2000;
-            min-width: 300px;
-        }
-        
-        .performance-input-modal h4 {
-            margin: 0 0 15px 0;
-            color: #2c3e50;
-        }
-        
-        .performance-input-modal input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #dee2e6;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        
-        .performance-input-modal .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-        
-        .performance-input-modal button {
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-        
-        .items-list {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow: visible;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .item {
-            background: rgba(255,255,255,0.4);
-            padding: 8px 12px;
-            margin: 4px 0;
-            border-radius: 8px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.3);
-            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            min-height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        
-        .item:hover {
-            background: rgba(255,255,255,0.6);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .item.completed {
-            opacity: 0.6;
-            background: rgba(255,255,255,0.25);
-        }
-        
-        .item.completed .item-title {
-            text-decoration: line-through;
-        }
-        
-        .item-content {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .item-title-text {
-            font-weight: 600;
-            font-size: 0.75em;
-            color: inherit;
-            margin: 0;
-            line-height: 1.2;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .item-details {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-            font-size: 0.7em;
-            opacity: 0.9;
-        }
-        
-        .item-duration {
-            background: rgba(255,255,255,0.3);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 500;
-        }
-        
-        .item-recurrence {
-            background: rgba(255,255,255,0.3);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 500;
-        }
-        
-        .item-controls-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-        
-        .scheduled-checkbox {
-            width: 14px;
-            height: 14px;
-            cursor: pointer;
-            accent-color: #28a745;
-            flex-shrink: 0;
-        }
-        
-        .scheduled-label {
-            font-size: 0.65em;
-            color: inherit;
-            opacity: 0.8;
-            margin-left: 2px;
-            flex-shrink: 0;
-        }
-        
-        .task-type-section {
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            padding: 10px;
-            background: rgba(255,255,255,0.1);
-        }
-        
-        .task-type-header {
-            font-weight: bold;
-            font-size: 0.9em;
-            margin-bottom: 8px;
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .task-type-header .grace-average {
-            font-size: 0.8em;
-            background: rgba(255,255,255,0.3);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: normal;
-        }
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.6em;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.3);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            flex-shrink: 0;
-        }
-        
-        .performance-circle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-        
-        .completion-checkbox {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: #667eea;
-            flex-shrink: 0;
-        }
-        
-        .delete-btn {
-            background: rgba(220, 53, 69, 0.7);
-            border: none;
-            padding: 4px 6px;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.7em;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .item:hover .delete-btn {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        .delete-btn:hover {
-            background: rgba(220, 53, 69, 0.9);
-            transform: scale(1.1);
-        }
-        
-        .item.completed .item-title {
-            text-decoration: line-through;
-        }
-        
-        @keyframes fadeInUp {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px) scale(0.95); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
-        }
-        
-        .item-controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .item:hover .item-controls {
-            opacity: 1;
-        }
-        
-        .control-btn {
-            background: rgba(255,255,255,0.3);
-            border: none;
-            padding: 4px 6px;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.75em;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-        }
-        
-        .control-btn:hover {
-            background: rgba(255,255,255,0.5);
-            transform: scale(1.1);
-        }
-        
-        .calendar-link {
-            display: inline-block;
-            background: rgba(255,255,255,0.3);
-            padding: 6px 12px;
-            border-radius: 15px;
-            text-decoration: none;
-            color: white;
-            font-size: 0.8em;
-            margin-top: 8px;
-            border: 1px solid rgba(255,255,255,0.4);
-            transition: all 0.3s ease;
-        }
-        
-        .calendar-link:hover {
-            background: rgba(255,255,255,0.5);
-            transform: translateY(-1px);
-        }
-        
-        .item-title {
-            font-weight: 600;
-            font-size: 0.8em;
-            color: inherit;
-            margin: 0;
-            padding-right: 70px;
-            line-height: 1.3;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-            min-font-size: 8px;
-        }
-        
-        .item-priority {
-            font-size: 0.75em;
-            opacity: 0.8;
-            margin-top: 4px;
-            font-weight: 500;
-        }
-        
-        .grace-indicator {
-            display: inline-block;
-            background: rgba(255,255,255,0.3);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: bold;
-            margin-top: 4px;
-        }
-        
-        .input-section {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 30px;
-            border-radius: 15px;
-            margin-top: 30px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-        
-        .input-section h3 {
-            color: #2c3e50;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-        
-        .input-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .optional-fields {
-            margin-bottom: 20px;
-        }
-        
-        .optional-fields input,
-        .optional-fields select {
-            color: #888 !important;
-        }
-        
-        .optional-fields input::placeholder {
-            color: #aaa !important;
-        }
-        
-        input[type="text"], input[type="number"], select, textarea {
-            padding: 15px;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: white;
-        }
-        
-        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            transform: translateY(-1px);
-        }
-        
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-            grid-column: 1 / -1;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-        
-        button:hover::before {
-            left: 100%;
-        }
-        
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
-        }
-        
-        .secondary-btn {
-            background: linear-gradient(135deg, #6c757d, #495057);
-        }
-        
-        .secondary-btn:hover {
-            box-shadow: 0 15px 30px rgba(108, 117, 125, 0.4);
-        }
-        
-        .legend {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .legend-item:hover {
-            background: rgba(255,255,255,0.8);
-            transform: translateY(-2px);
-        }
-        
-        .legend-color {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            flex-shrink: 0;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-        }
-        
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            animation: modalSlideIn 0.3s ease;
-        }
-        
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-50px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        
-        .close:hover {
-            color: #667eea;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #28a745, #20c997);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        
-        .filter-section {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-        
-        .filter-section h3 {
-            color: #2c3e50;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-        
-        .filter-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .filter-controls select {
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            min-width: 180px;
-        }
-        
-        .filter-controls select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .unutilized-time-display {
-            margin-top: 20px;
-            padding: 15px;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid #dee2e6;
-        }
-        
-        .unutilized-title {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-        
-        .unutilized-values {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .unutilized-values span {
-            color: #28a745;
-        }
-        
-        @media (max-width: 768px) {
-            .matrix-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: minmax(200px, auto) minmax(200px, auto) minmax(400px, auto) minmax(400px, auto) minmax(150px, auto) minmax(150px, auto);
-                min-height: auto;
-            }
-            
-            .quadrant-held {
-                grid-column: 1;
-            }
-            
-            .quadrant-completed {
-                grid-column: 1;
-            }
-            
-            .input-group {
-                grid-template-columns: 1fr;
-            }
-            
-            .grace-items {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .pie-chart {
-                width: 250px;
-                height: 250px;
-            }
-            
-            .charts-container {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .quadrant {
-                padding: 15px;
-            }
-            
-            .stats-bar {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        /* Print Styles */
-        @media print {
-            body {
-                background: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            .container {
-                max-width: 100% !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-                padding: 20px !important;
-                page-break-inside: avoid;
-            }
-            
-            .container::before {
-                display: none;
-            }
-            
-            .input-section, .button-group, .filter-section {
-                display: none !important;
-            }
-            
-            .matrix-container {
-                gap: 10px !important;
-                min-height: 350px !important;
-                page-break-inside: avoid;
-            }
-            
-            .quadrant {
-                padding: 10px !important;
-                min-height: 120px !important;
-                break-inside: avoid;
-            }
-            
-            .quadrant-title {
-                font-size: 1.2em !important;
-            }
-            
-            .item-title {
-                font-size: max(8px, 0.7em) !important;
-            }
-            
-            .time-allocation-chart {
-                page-break-inside: avoid;
-                margin-top: 20px !important;
-            }
-            
-            .charts-container {
-                grid-template-columns: 1fr 1fr !important;
-            }
-            
-            .pie-chart {
-                width: 200px !important;
-                height: 200px !important;
-            }
-            
-            .legend {
-                page-break-inside: avoid;
-            }
-            
-            .progress-bar {
-                display: none !important;
-            }
-        }
-        
-        /* Responsive Font Scaling */
-        @media (max-width: 1200px) {
-            .item-title {
-                font-size: max(8px, 0.75em);
-            }
-            
-            .quadrant-title {
-                font-size: 1.3em;
-            }
-        }
-        
-        @media (max-width: 900px) {
-            .item-title {
-                font-size: max(8px, 0.7em);
-            }
-            
-            .quadrant-title {
-                font-size: 1.2em;
-            }
-            
-            .quadrant {
-                padding: 12px;
-            }
-        }
+</html>
